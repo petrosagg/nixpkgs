@@ -1,4 +1,15 @@
-{ lib, fetchFromGitHub, fetchzip, rustPlatform, cmake, openssl, perl, pkg-config }:
+{ stdenv
+, lib
+, fetchFromGitHub
+, fetchzip
+, rustPlatform
+, buildPackages
+, darwin
+, cmake
+, libiconv
+, openssl
+, perl
+, pkg-config}:
 
 let
   fetchNpmPackage = {name, version, sha256, js_prod_file, js_dev_file, ...} @ args:
@@ -40,8 +51,16 @@ rustPlatform.buildRustPackage rec {
 
   cargoSha256 = "0gfpv3rqmr18lbja1hl1iipn20fnnxslcwr3l2yb2k06sp19pcz9";
 
-  nativeBuildInputs = [ cmake perl pkg-config ];
-  buildInputs = [ openssl ];
+  nativeBuildInputs = [ cmake perl pkg-config ]
+    # Provides the mig command used by the krb5-src build script
+    ++ lib.optional stdenv.isDarwin buildPackages.darwin.bootstrap_cmds;
+
+  buildInputs = [ openssl ]
+    ++ lib.optionals stdenv.isDarwin [
+      libiconv
+      darwin.apple_sdk.frameworks.Foundation
+      darwin.apple_sdk.frameworks.DiskArbitration
+    ];
 
   # Skip tests that use the network
   checkFlagsArray = [
@@ -68,7 +87,7 @@ rustPlatform.buildRustPackage rec {
     homepage    = "https://materialize.com";
     description = "A streaming SQL materialized view engine for real-time applications";
     license     = licenses.bsl11;
-    platforms   = [ "x86_64-linux" ];
+    platforms   = [ "x86_64-linux" "x86_64-darwin" ];
     maintainers = [ maintainers.petrosagg ];
   };
 }
