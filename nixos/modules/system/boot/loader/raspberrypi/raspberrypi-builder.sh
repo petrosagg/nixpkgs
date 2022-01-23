@@ -8,6 +8,8 @@ shopt -s nullglob
 export PATH=/empty
 for i in @path@; do PATH=$PATH:$i/bin; done
 
+echo $@
+
 usage() {
     echo "usage: $0 -c <path-to-default-configuration> [-d <boot-dir>]" >&2
     exit 1
